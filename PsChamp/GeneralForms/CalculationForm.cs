@@ -90,6 +90,11 @@ namespace PsChamp.GeneralForms
 
         private decimal GetPercent(int count, int countWin)
         {
+            if (count == 0)
+            {
+                return default;
+            }
+            
             var result = (decimal)countWin / (decimal)count * 100;            
             return decimal.Round(result, 2, MidpointRounding.AwayFromZero);
         }
