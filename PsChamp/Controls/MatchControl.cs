@@ -260,7 +260,15 @@ namespace PsChamp.Controls
             {
                 if (gridView.GetRow(e.RowHandle) is Match match)
                 {
-                    if (match.ScoreFirst is null && match.ScoreSecond is null)
+                    if (_teamFirst?.Contains(match.Guid) is true)
+                    {
+                        e.Appearance.BackColor = Color.LightBlue;
+                    }
+                    else if (_teamSecond?.Contains(match.Guid) is true)
+                    {
+                        e.Appearance.BackColor = Color.LightGreen;
+                    }
+                    else if (match.ScoreFirst is null && match.ScoreSecond is null)
                     {
                         e.Appearance.BackColor = Color.LightGray;
                     }
@@ -293,7 +301,30 @@ namespace PsChamp.Controls
         private void barBtnCalculation_ItemClick(object sender, ItemClickEventArgs e)
         {
             var form = new CalculationForm();
+            form.GridControlStyleRowEvent += Form_GridControlStyleRowEvent;
+            form.FormClosing += CalculationForm_FormClosing1;
             form.XtraFormShow();
+        }
+
+        private IEnumerable<Guid> _teamFirst;
+        private IEnumerable<Guid> _teamSecond;
+        
+        private void CalculationForm_FormClosing1(object sender, FormClosingEventArgs e)
+        {
+            var form = Objects.GetRequiredObject<CalculationForm>(sender);
+            if (form != null)
+            {
+                form.GridControlStyleRowEvent -= Form_GridControlStyleRowEvent;
+                _teamFirst = default;
+                _teamSecond = default;
+            }
+        }
+
+        private void Form_GridControlStyleRowEvent(object sender, IEnumerable<Guid> teamFirst, IEnumerable<Guid> teamSecond)
+        {
+            _teamFirst = teamFirst;
+            _teamSecond = teamSecond;
+            gridView?.RefreshData();
         }
     }
 }

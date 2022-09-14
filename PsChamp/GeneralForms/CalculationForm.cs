@@ -17,6 +17,9 @@ namespace PsChamp.GeneralForms
         private UnitOfWork _uof = new UnitOfWork();
         private List<Match> matches = new List<Match>();
 
+        public delegate void GridControlStyleRowEventHandler(object sender, IEnumerable<Guid> teamFirst, IEnumerable<Guid> teamSecond);
+        public event GridControlStyleRowEventHandler GridControlStyleRowEvent;
+
         private MatchControl _teamFirstMatchControl;
         private MatchControl _teamSecondMatchControl;
 
@@ -69,17 +72,20 @@ namespace PsChamp.GeneralForms
 
             AddTextToMemoEdit(text: $"N: {n}");
             var count = matches.Count;
-            AddTextToMemoEdit(text: $"Количество матчей: {count}");
-            
-            var countTeamFirstWin = GetCountTeamFirstWin(n, count);
-            AddTextToMemoEdit(text: $"Побед хозяев ({GetPercent(count, countTeamFirstWin)}%): {countTeamFirstWin} (N = {n})");
-            _teamFirstMatchControl.UpdateData(teamFerstWins);
+            AddTextToMemoEdit(text: $"Количество матчей: {count}");            
 
             var countTeamSecondWin = GetCountTeamSecondWin(n, count);
-            AddTextToMemoEdit(text: $"Побед гостей ({GetPercent(count, countTeamSecondWin)}%): {countTeamSecondWin} (N = {n})");
+            var countTeamFirstWin = GetCountTeamFirstWin(n, count);
+            
+            AddTextToMemoEdit(text: $"Побед хозяев ({GetPercent(count, countTeamSecondWin)}%): {countTeamSecondWin} (N = {n})");
             _teamSecondMatchControl.UpdateData(teamSecondWins);
 
+            AddTextToMemoEdit(text: $"Побед гостей ({GetPercent(count, countTeamFirstWin)}%): {countTeamFirstWin} (N = {n})");
+            _teamFirstMatchControl.UpdateData(teamFirstWins);
+
             AddTextToMemoEdit(text: "Расчет окончен...");
+
+            GridControlStyleRowEvent?.Invoke(this, teamSecondWins?.Select(s => s.Guid), teamFirstWins?.Select(s => s.Guid));
         }
 
         private decimal GetPercent(int count, int countWin)
@@ -88,17 +94,28 @@ namespace PsChamp.GeneralForms
             return decimal.Round(result, 2, MidpointRounding.AwayFromZero);
         }
 
-        private List<Match> teamFerstWins;
+        private List<Match> teamFirstWins;
         private List<Match> teamSecondWins;
 
         private int GetCountTeamFirstWin(int n, int count)
         {
             var tempN = 0;
             var countTeamFirstWin = 0;
-            teamFerstWins = new List<Match>();
+            teamSecondWins = new List<Match>();
 
             for (int i = 0; i < count; i++)
             {
+                if (tempN == n)
+                {
+                    if (matches[i].ScoreFirst < matches[i].ScoreSecond)
+                    {
+                        teamSecondWins.Add(matches[i]);
+                        countTeamFirstWin++;
+                    }
+                    tempN = 0;
+                    continue;
+                }
+
                 if (matches[i].ScoreFirst > matches[i].ScoreSecond)
                 {
                     tempN++;
@@ -106,13 +123,7 @@ namespace PsChamp.GeneralForms
                 else
                 {
                     tempN = 0;
-                }
-
-                if (tempN == n)
-                {
-                    teamFerstWins.Add(matches[i]);
-                    countTeamFirstWin++; 
-                }
+                }                
             }
 
             return countTeamFirstWin;
@@ -122,10 +133,21 @@ namespace PsChamp.GeneralForms
         {
             var tempN = 0;
             var countTeamSecondWin = 0;
-            teamSecondWins = new List<Match>();
+            teamFirstWins = new List<Match>();
 
             for (int i = 0; i < count; i++)
             {
+                if (tempN == n)
+                {
+                    if (matches[i].ScoreFirst > matches[i].ScoreSecond)
+                    {
+                        teamFirstWins.Add(matches[i]);
+                        countTeamSecondWin++;
+                    }
+                    tempN = 0;
+                    continue;
+                }
+
                 if (matches[i].ScoreFirst < matches[i].ScoreSecond)
                 {
                     tempN++;
@@ -133,12 +155,6 @@ namespace PsChamp.GeneralForms
                 else
                 {
                     tempN = 0;
-                }
-
-                if (tempN == n)
-                {
-                    teamSecondWins.Add(matches[i]);
-                    countTeamSecondWin++;
                 }
             }
 

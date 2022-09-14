@@ -17,7 +17,7 @@ namespace PsChamp.GeneralForms
     {
         private bool _isWrite => !checkIsWrite.Checked;        
         private UnitOfWork _uof = new UnitOfWork();
-                
+        
         public delegate void UpdateEventHandler(bool isUpdate);
         public event UpdateEventHandler UpdateEvent;
 
